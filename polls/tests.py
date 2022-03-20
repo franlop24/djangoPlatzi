@@ -1,5 +1,6 @@
 import datetime
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 from polls.models import Question
 
@@ -22,5 +23,15 @@ class QuestionModelTests(TestCase):
     def test_was_published_earlier_than_a_day(self):
         """was_published_recently returns True for questions created earlier than a day"""
 
+        time = timezone.now() - datetime.timedelta(days=1)
         now_question = Question(question_text="¿Quien es el mejor CD de Platzi?", pub_date=timezone.now())
         self.assertTrue(now_question.was_published_recently())
+
+class QuestionIndexViewTests(TestCase):
+
+    def test_no_questions(self):
+        """If no questions exist, an appropiate message is displayed"""
+        response = self.client.get(reverse("polls:index"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No polls are available.")
+        self.assertQuerysetEqual(response.context["latest_question_list"], [])
