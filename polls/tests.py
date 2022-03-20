@@ -48,3 +48,17 @@ class QuestionIndexViewTests(TestCase):
         response = self.client.get(reverse("polls:index"))
         #self.assertQueryNotEqual(response.context["latest_question_list"], [question])
         self.assertEquals(len(response.context["latest_question_list"]), 1)
+
+    def test_future_question_and_past_question(self):
+        """test with a question in the future and a question in the past, returns a latest_question_list with only a question"""
+        Question(question_text="Question in the Past?", pub_date=timezone.now() - timezone.timedelta(days=10)).save()
+        Question(question_text="Question in the Future?", pub_date=timezone.now() + timezone.timedelta(days=10)).save()
+        response = self.client.get(reverse("polls:index"))
+        self.assertEquals(len(response.context["latest_question_list"]), 1)
+
+    def test_with_two_future_questions(self):
+        """test with a question in the future and a question in the past, returns a latest_question_list with only a question"""
+        Question(question_text="Question in the Past 1?", pub_date=timezone.now() - timezone.timedelta(days=10)).save()
+        Question(question_text="Question in the Past 2?", pub_date=timezone.now() - timezone.timedelta(days=20)).save()
+        response = self.client.get(reverse("polls:index"))
+        self.assertEquals(len(response.context["latest_question_list"]), 2)
