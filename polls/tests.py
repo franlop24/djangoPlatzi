@@ -24,8 +24,8 @@ class QuestionModelTests(TestCase):
         """was_published_recently returns True for questions created earlier than a day"""
 
         time = timezone.now() - datetime.timedelta(days=1)
-        now_question = Question(question_text="¿Quien es el mejor CD de Platzi?", pub_date=timezone.now())
-        self.assertTrue(now_question.was_published_recently())
+        now_question = Question(question_text="¿Quien es el mejor CD de Platzi?", pub_date=time)
+        self.assertFalse(now_question.was_published_recently())
 
 class QuestionIndexViewTests(TestCase):
 
@@ -35,3 +35,16 @@ class QuestionIndexViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "No polls are available.")
         self.assertQuerysetEqual(response.context["latest_question_list"], [])
+
+    def test_no_questions_in_the_future(self):
+        """Question created in the future has not been included in latest_question_list"""
+        Question(question_text="Question in the future?", pub_date=timezone.now() + timezone.timedelta(days=1)).save()
+        response = self.client.get(reverse("polls:index"))
+        self.assertQuerysetEqual(response.context["latest_question_list"], [])
+
+    def test_with_questions_in_the_past(self):
+        """Question created in the past has been included in latest_question_list"""
+        question = Question(question_text="Question in the Past?", pub_date=timezone.now() - timezone.timedelta(days=10)).save()
+        response = self.client.get(reverse("polls:index"))
+        #self.assertQueryNotEqual(response.context["latest_question_list"], [question])
+        self.assertEquals(len(response.context["latest_question_list"]), 1)
