@@ -1,6 +1,14 @@
 from django.contrib import admin
+from polls.models import Choice, Question
 
-from polls.models import Question
+class ChoiceInline(admin.StackedInline):
+    model = Choice
+    extra = 3
 
-# Register your models here.
-admin.site.register(Question)
+
+class QuestionAdmin(admin.ModelAdmin):
+    fields = ["pub_date", "question_text"]
+    inlines = [ChoiceInline]
+
+
+admin.site.register(Question, QuestionAdmin)
