@@ -27,6 +27,7 @@ class QuestionModelTests(TestCase):
         now_question = Question(question_text="¿Quien es el mejor CD de Platzi?", pub_date=time)
         self.assertFalse(now_question.was_published_recently())
 
+
 class QuestionIndexViewTests(TestCase):
 
     def test_no_questions(self):
@@ -62,3 +63,26 @@ class QuestionIndexViewTests(TestCase):
         Question(question_text="Question in the Past 2?", pub_date=timezone.now() - timezone.timedelta(days=20)).save()
         response = self.client.get(reverse("polls:index"))
         self.assertEquals(len(response.context["latest_question_list"]), 2)
+
+
+class QuestionDetailViewTest(TestCase):
+    def test_future_question(self):
+        """The detail view of a question with a pub_date in the future
+        returns a 404 error not found"""
+    
+        future_question = Question(question_text="Question in the Future", pub_date=timezone.now() + timezone.timedelta(days=10))
+        future_question.save()
+        url = reverse("polls:detail", args=(future_question.id,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_past_question(self):
+        """ 
+        The detail view of a question with a pub_date in the past
+        displays the question's text
+        """
+        past_question = Question(question_text="Question in the Past", pub_date=timezone.now() - timezone.timedelta(days=10))
+        past_question.save()
+        url = reverse("polls:detail", args=(past_question.id,))
+        response = self.client.get(url)
+        self.assertContains(response, past_question.question_text)
